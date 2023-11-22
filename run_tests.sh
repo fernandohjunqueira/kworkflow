@@ -1,7 +1,7 @@
 #!/bin/bash
 
 . ./src/lib/kw_include.sh --source-only
-include './tests/utils.sh'
+include './tests/unit/utils.sh'
 include './src/lib/kwio.sh'
 
 function show_help()
@@ -63,7 +63,7 @@ function run_tests()
   local test_failure_list=''
 
   for current_test in "${TESTS[@]}"; do
-    target=$(find ./tests -name "${current_test}*.sh" | grep --extended-regexp --invert-match 'samples/.*|/shunit2/')
+    target=$(find ./tests/unit -name "${current_test}*.sh" | grep --extended-regexp --invert-match 'samples/.*|/shunit2/')
     if [[ -f "$target" ]]; then
       say "Running test [${current_test}]"
       say "$SEPARATOR"
@@ -103,7 +103,7 @@ function strip_path()
 check_files="$?"
 #shellcheck disable=SC2086
 if [[ "$#" -eq 0 ]]; then
-  files_list=$(find ./tests -name '*_test.sh' | grep --extended-regexp --invert-match 'samples/.*|/shunit2/')
+  files_list=$(find ./tests/unit -name '*_test.sh' | grep --extended-regexp --invert-match 'samples/.*|/shunit2/')
   # Note: Usually we want to use double-quotes on bash variables, however,
   # in this case we want a set of parameters instead of a single one.
   strip_path $files_list
@@ -112,7 +112,7 @@ if [[ "$#" -eq 0 ]]; then
   LANGUAGE=en_US.UTF_8 run_tests
 elif [[ "$1" == 'list' ]]; then
   index=0
-  files_list=$(find ./tests/ -name '*_test.sh')
+  files_list=$(find ./tests/unit -name '*_test.sh')
   strip_path $files_list
   for test_name in "${TESTS[@]}"; do
     ((index++))
