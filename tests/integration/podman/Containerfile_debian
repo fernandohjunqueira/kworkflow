@@ -1,0 +1,11 @@
+FROM docker.io/library/debian
+
+RUN apt update -y && apt upgrade -y && apt install git -y
+
+RUN git clone https://github.com/kworkflow/kworkflow /opt/kw
+
+WORKDIR /opt/kw
+
+RUN ./setup.sh --install --force
+
+# vim: set filetype=dockerfile :
