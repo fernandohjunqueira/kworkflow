@@ -11,6 +11,8 @@ function show_help()
     "Example: $0 test kw_test" \
     '' \
     'OPTIONS' \
+    '  -i, --integration' \
+    '         Limit tests to integration tests' \
     '  -u, --unit' \
     '         Limit tests to unit tests' \
     '' \
@@ -108,6 +110,9 @@ function strip_path()
 declare TESTS_DIR=./tests
 if [[ "$1" == '--unit' || "$1" == '-u' ]]; then
   TESTS_DIR=./tests/unit
+  shift
+elif [[ "$1" == '--integration' || "$1" == '-i' ]]; then
+  TESTS_DIR=./tests/integration
   shift
 fi
 
