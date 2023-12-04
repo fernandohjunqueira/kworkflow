@@ -130,3 +130,12 @@ function container_exec()
 {
   podman container exec "$@" 2> /dev/null
 }
+
+# copy local file to container
+container_copy()
+{
+  local container="$1"
+  local src="$2"
+  local dst="$3"
+  podman container cp "${src}" "${container}":"${dst}"
+}
