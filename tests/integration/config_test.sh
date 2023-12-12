@@ -27,27 +27,29 @@ function local_config_test_helper()
   local expected_output
 
   # make sure config is defined
-  assertTrue 'config is not defined' "[[ -n '${config}' ]]"
+  if [[ -z "${config}" ]]; then
+    fail "($LINENO): 'config' is not defined."     
+  fi
 
   # the path to the config file
   config_file="${SAMPLES_DIR}/config/${config}.config"
 
   # the expected output is the same for all distros
-  expected_output=$(sort "${config_file}")
+  expected_output=$(sort --dictionary-order "${config_file}")
 
   for distro in "${DISTROS[@]}"; do
     container="kw-${distro}"
 
     # get the output inside the container
-    output=$(container_exec --workdir /tmp "${container}" kw config --show --local "${config}")
+    output=$(container_exec --workdir '/tmp' "${container}" "kw config --show --local" "${config}")
 
     # assert command did not fail
-    assertTrue "kw failed show local variables in $distro" "[[ 0 -eq $? ]]"
+    assertTrue "kw failed show local variables in ${distro}" "[[ 0 -eq $? ]]"
 
     # remove prefix and N/A values from the output and sort them, before comparing
-    output=$(printf '%s' "$output" | grep -v 'N/A' | sed "s/^${config}.//" | sort)
+    output=$(printf '%s' "$output" | grep --invert-match 'N/A' | sed "s/^${config}.//" | sort --dictionary-order)
 
-    assertEquals "$expected_output" "$output"
+    assertEquals "($LINENO): kw config failed for ${distro}" "$expected_output" "$output"
   done
 }
 

@@ -16,13 +16,18 @@ KWROOT_DIR=$(realpath "${script_dir}/../..")
 # supported distros
 DISTROS=('archlinux' 'debian' 'fedora')
 
-# Builds a container imagem for the given distro
+# Builds a container image for the given distro
 function build_distro_image()
 {
   local distro="${1}"
   local file="${CONTAINER_DIR}/Containerfile_${distro}"
 
   podman image build --file "$file" --tag "kw-${distro}" 2> /dev/null
+  
+  # Check if the command failed
+  if [[ $? -ne 0 ]]; then
+    fail "($LINENO): Error building the image for distribution ${distro}"
+  fi  
 }
 
 # Builds container images and create containers used accross the tests.
@@ -39,9 +44,11 @@ function setup_container_environment()
   for distro in "${DISTROS[@]}"; do
     # Only build the image if it does not exists. That's because trying to build
     # the podman image takes a half second even if it exists and is cached.
-    if ! podman image exists "kw-${distro}"; then
+    podman image exists "kw-${distro}"
+    if [[ $? -ne 0 ]]; then
       # Build the image or exit. The integration tests cannot continue otherwise
-      if ! build_distro_image "$distro" > /dev/null; then
+      build_distro_image "$distro" > /dev/null
+      if [[ $? -ne 0 ]]; then
         complain 'failed to setup container environment'
         teardown_container_environment
         exit 1
@@ -79,7 +86,8 @@ function setup_container_environment()
 
     # Maybe the container is not running, but it does exist.
     # In this case, we tear it down because it could be in a improper state.
-    if podman container exists "${container_name}"; then
+    podman container exists "${container_name}"
+    if [[ $? -eq 0 ]]; then
       teardown_single_container "${container_name}"
     fi
 
@@ -89,7 +97,7 @@ function setup_container_environment()
     # process must not terminate. Therefore, we run a never-ending command as  the
     # primary process,  so  that  we  can  execute  multiple  commands  (secondary
     # processes) and get the output of each of them separately.
-    working_directory=/tmp/kw
+    working_directory='/tmp/kw'
     podman run \
       --workdir "${working_directory}" \
       --volume "${KWROOT_DIR}":"${working_directory}" \
@@ -98,9 +106,17 @@ function setup_container_environment()
       --detach \
       "${container_img}" sleep infinity > /dev/null
 
+    if [[ $? -ne 0 ]]; then
+      fail "($LINENO): Failed to run the container ${container_name}"
+    fi  
+
     # install kw again
     podman exec "${container_name}" \
       ./setup.sh -i --force --skip-docs > /dev/null 2>&1
+
+    if [[ $? -ne 0 ]]; then
+      fail "($LINENO): Failed to install kw in the container ${container_name}"
+    fi
   done
 }
 
@@ -109,7 +125,9 @@ function teardown_single_container()
 {
   local container="$1"
 
-  if podman container exists "${container}"; then
+  podman container exists "${container}"
+
+  if [[ $? -eq 0 ]]; then
     # destroy the container, waiting 0 seconds to send SIGKILL
     podman container rm --force --time 0 "${container}" > /dev/null 2>&1
   fi
@@ -129,6 +147,10 @@ teardown_container_environment()
 function container_exec()
 {
   podman container exec "$@" 2> /dev/null
+
+  if [[ $? -ne 0 ]]; then
+    fail "($LINENO): Failed to execute the command in the container."
+  fi
 }
 
 # copy local file to container

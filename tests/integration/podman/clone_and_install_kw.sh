@@ -9,7 +9,7 @@
 # copied to the container and installed, but the dependencies won't have  to  be
 # installed again, which saves a lot of time.
 
-kw_dir=/tmp/kw
+kw_dir='/tmp/kw'
 
 git clone https://github.com/kworkflow/kworkflow "${kw_dir}"
 cd "$kw_dir" || exit 1

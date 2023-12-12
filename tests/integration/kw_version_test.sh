@@ -35,16 +35,16 @@ function kw_version_test_helper()
   # commands directly on the host instead of running in the container.
   head_hash=$(git --git-dir "${kw_git_dir}" rev-parse --short HEAD)
   branch_name=$(git --git-dir "${kw_git_dir}" rev-parse --short --abbrev-ref HEAD)
-  base_version=$(cat "${kw_dir}/src/VERSION" | head -n 1)
+  base_version=$(< "${kw_dir}/src/VERSION" | head --lines=1)
 
   # using the gathered information, we build the expected output
   expected_output=$(printf '%s\nBranch: %s\nCommit: %s' "$base_version" "$branch_name" "$head_hash")
 
   # collect the kw version in the container
   container="kw-${distro}"
-  output=$(container_exec "${container}" kw --version)
+  output=$(container_exec "${container}" 'kw --version')
 
-  assertEquals "$expected_output" "$output"
+  assertEquals "($LINENO): kw version failed for ${distro}" "$expected_output" "$output"
 }
 
 function test_kw_version_on_archlinux()

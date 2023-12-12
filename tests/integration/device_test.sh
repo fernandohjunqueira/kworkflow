@@ -22,7 +22,7 @@ function device_info_test_helper()
 
   # buffer with all information
   container="kw-${distro}"
-  buffer=$(container_exec "$container" kw device --local)
+  buffer=$(container_exec "$container" 'kw device --local')
 
   # some fields must be ignored because they surely won't match
   filter=(
@@ -45,7 +45,8 @@ function device_info_test_helper()
   # deviceinfo shows GPU information for Arch, but not for Debian and Fedora.
   # This is due to some libraries being present in Arch, but not in the others.
   # Therefore, if this information is not present, we must filter it out.
-  if ! grep 'GPU:' <<< "${output}" > /dev/null; then
+  grep 'GPU:' <<< "${output}" > /dev/null
+  if [[ $? -ne 0 ]]; then
     # we resort to SED because GREP can't filter out lines after context IF we
     # use invert match. First, we tell sed to stop printing lines after matching
     # the pattern GPU then delete the line containing that pattern
@@ -53,7 +54,7 @@ function device_info_test_helper()
   fi
 
   # compare
-  assertEquals "${output}" "${expected_output}"
+  assertEquals "($LINENO): kw device failed for ${distro}" "${output}" "${expected_output}"
 }
 
 function test_device_archlinux()
